@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Author's AI Assistant</title>
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Left sidebar toolbar -->
+    <div id="toolbar" class="toolbar">
+      <div class="toolbar-header">
+        <h2>Toolkit</h2>
+      </div>
+      <div class="toolbar-content">
+        <div class="toolbar-section" data-section="editor">
+          <div class="section-header">Editor</div>
+        </div>
+        <div class="toolbar-section" data-section="characters">
+          <div class="section-header">Characters</div>
+        </div>
+        <div class="toolbar-section" data-section="locations">
+          <div class="section-header">Locations</div>
+        </div>
+        <div class="toolbar-section" data-section="assets">
+          <div class="section-header">Assets</div>
+        </div>
+        <div class="toolbar-section" data-section="ai">
+          <div class="section-header">AI Assistant</div>
+        </div>
+        <div class="toolbar-section" data-section="settings">
+          <div class="section-header">Settings</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main editor area -->
+    <div id="editor-container" class="editor-container">
+      <div class="editor-header">
+        <div id="file-info">Untitled.story</div>
+        <div class="editor-actions">
+          <button id="save-btn">Save</button>
+          <button id="open-btn">Open</button>
+        </div>
+      </div>
+      <div id="editor-content" class="editor-content">
+        <!-- Editor will be initialized here -->
+      </div>
+      <div id="panel-content" class="panel-content hidden">
+        <!-- Dynamic content for different panels -->
+      </div>
+    </div>
+
+    <!-- Right chapter browser -->
+    <div id="chapter-browser" class="chapter-browser">
+      <div class="chapter-browser-header">
+        <h2>Chapters</h2>
+        <button id="add-chapter-btn">+ Add</button>
+      </div>
+      <div id="chapters-list" class="chapters-list">
+        <!-- Chapters will be listed here -->
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
