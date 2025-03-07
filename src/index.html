@@ -1,65 +1,485 @@
+<!-- src/index.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Author's AI Assistant</title>
+  <title>Breeze</title>
   <link rel="stylesheet" href="styles/main.css">
 </head>
-<body>
-  <div class="app-container">
+<body class="antialiased">
+  <div class="grid grid-cols-3 h-screen w-screen overflow-hidden">
+    <!-- Custom title bar (for frameless window) -->
+    <div id="custom-titlebar" class="app-region-drag">
+      <div class="text-slate-400">Breeze</div>
+    </div>
+    
     <!-- Left sidebar toolbar -->
-    <div id="toolbar" class="toolbar">
-      <div class="toolbar-header">
-        <h2>Toolkit</h2>
+    <div id="toolbar" class="flex-col h-full overflow-hidden">
+      <div class="p-4 bg-slate-900 border-b">
+        <h2 class="text-sm font-semibold tracking-tight uppercase">Toolkit</h2>
       </div>
-      <div class="toolbar-content">
-        <div class="toolbar-section" data-section="editor">
-          <div class="section-header">Editor</div>
-        </div>
-        <div class="toolbar-section" data-section="characters">
-          <div class="section-header">Characters</div>
-        </div>
-        <div class="toolbar-section" data-section="locations">
-          <div class="section-header">Locations</div>
-        </div>
-        <div class="toolbar-section" data-section="assets">
-          <div class="section-header">Assets</div>
-        </div>
-        <div class="toolbar-section" data-section="ai">
-          <div class="section-header">AI Assistant</div>
-        </div>
-        <div class="toolbar-section" data-section="settings">
-          <div class="section-header">Settings</div>
-        </div>
+      <div class="flex-1 flex flex-col overflow-y-auto p-2 space-y-1">
+        <button data-section="editor" class="nav-item app-region-no-drag">
+          Editor
+        </button>
+        <button data-section="characters" class="nav-item app-region-no-drag">
+          Characters
+        </button>
+        <button data-section="locations" class="nav-item app-region-no-drag">
+          Locations
+        </button>
+        <button data-section="assets" class="nav-item app-region-no-drag">
+          Assets
+        </button>
+        <button data-section="ai" class="nav-item nav-item-active app-region-no-drag">
+          Assistant
+        </button>
+        <button data-section="settings" class="nav-item app-region-no-drag">
+          Settings
+        </button>
       </div>
     </div>
 
     <!-- Main editor area -->
-    <div id="editor-container" class="editor-container">
-      <div class="editor-header">
-        <div id="file-info">Untitled.story</div>
-        <div class="editor-actions">
-          <button id="save-btn">Save</button>
-          <button id="open-btn">Open</button>
+    <div id="editor-container" class="flex-col h-full overflow-hidden pt-9">
+      <div class="flex h-12 items-center justify-between px-4 py-2 border-b">
+        <div id="file-info" class="font-medium text-sm">Untitled.story</div>
+        <div class="flex items-center space-x-2">
+          <div class="relative" id="save-dropdown-container">
+            <button id="save-btn" class="btn btn-primary app-region-no-drag">Save</button>
+            <button id="save-dropdown-btn" class="btn btn-icon app-region-no-drag">▼</button>
+            <div id="save-dropdown" class="hidden absolute right-0 mt-1 w-32 bg-slate-800 border border-slate-700 rounded shadow-lg z-10">
+              <button id="save-as-btn" class="block w-full text-left px-4 py-2 hover:bg-slate-700">Save As...</button>
+            </div>
+          </div>
+          <button id="open-btn" class="btn btn-secondary app-region-no-drag">Open</button>
         </div>
       </div>
-      <div id="editor-content" class="editor-content">
+      
+      <div id="editor-content" class="flex-1 overflow-auto hidden">
         <!-- Editor will be initialized here -->
       </div>
-      <div id="panel-content" class="panel-content hidden">
-        <!-- Dynamic content for different panels -->
+      
+      <div id="panel-content" class="flex-1 overflow-auto">
+        <!-- AI Assistant panel -->
+        <div id="ai-panel">
+          <h2 class="text-2xl font-semibold tracking-tight mb-6">Writing Assistant</h2>
+          
+          <div class="form-group mb-4">
+            <label for="ai-prompt" class="form-label">Ask me anything about your story</label>
+            <textarea id="ai-prompt" class="form-textarea" placeholder="Ask about character development, plot ideas, or writing advice..."></textarea>
+          </div>
+          
+          <div class="ai-prompt-tips mb-4">
+            <p>Pro tips:</p>
+            <ul>
+              <li>Use <code>@character</code> to include character details (e.g., <code>@Stephen</code>)</li>
+              <li>Use <code>@location</code> to include location details (e.g., <code>@Castle</code>)</li>
+              <li>Use <code>#number</code> to reference chapters (e.g., <code>#1</code> for Chapter 1)</li>
+            </ul>
+          </div>
+          
+          <div class="flex justify-end mb-6">
+            <button id="generate-ai-btn" class="btn btn-primary app-region-no-drag">Generate</button>
+          </div>
+          
+          <div class="ai-response-container border rounded-md overflow-hidden">
+            <div class="ai-response-tabs border-b">
+              <button id="rendered-tab" class="ai-tab-btn active app-region-no-drag">Rendered</button>
+              <button id="raw-tab" class="ai-tab-btn app-region-no-drag">Raw</button>
+            </div>
+            
+            <div id="ai-response-display" class="p-4 min-h-[300px] overflow-auto">
+              <!-- Current AI response will be displayed here -->
+              <div class="empty-state">
+                <p>Ask a question to see a response</p>
+              </div>
+            </div>
+            
+            <div id="ai-response-raw" class="p-4 min-h-[300px] overflow-auto hidden font-mono text-sm whitespace-pre-wrap">
+              <!-- Raw AI response will be displayed here -->
+              <div class="empty-state">
+                <p>Ask a question to see raw response</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Characters panel (hidden by default) -->
+        <div id="characters-panel" class="hidden">
+          <div class="panel-header">
+            <h2 class="text-2xl font-semibold tracking-tight">Characters</h2>
+            <button class="btn btn-success app-region-no-drag">Add Character</button>
+          </div>
+          
+          <div id="characters-grid">
+            <!-- Character cards will be populated here -->
+            <div class="empty-state col-span-3">
+              <p>No characters created yet</p>
+            </div>
+          </div>
+          
+          <div class="card mt-8">
+            <div class="card-header">
+              <h3 class="card-title">Character Relationships</h3>
+            </div>
+            <div id="relationship-graph-container" class="card-body">
+              <p class="empty-state">Character relationship graph visualization will appear here</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Locations panel (hidden by default) -->
+        <div id="locations-panel" class="hidden">
+          <div class="panel-header">
+            <h2 class="text-2xl font-semibold tracking-tight">Locations</h2>
+            <button class="btn btn-success app-region-no-drag">Add Location</button>
+          </div>
+          
+          <div class="locations-layout">
+            <!-- Left Column: List View -->
+            <div class="locations-sidebar space-y-2">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title">All Locations</h3>
+                </div>
+                <div class="card-body p-3" id="locations-list">
+                  <!-- Location items will be populated here -->
+                </div>
+              </div>
+              
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title">Legend</h3>
+                </div>
+                <div class="card-body p-3">
+                  <div class="space-y-1 text-sm">
+                    <div class="flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full location-city"></span>
+                      <span>City</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full location-wilderness"></span>
+                      <span>Wilderness</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full location-landmark"></span>
+                      <span>Landmark</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full location-building"></span>
+                      <span>Building</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Right Column: Map & Details -->
+            <div class="locations-main space-y-4">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title" id="selected-location-name">Select a Location</h3>
+                </div>
+                <div id="location-map-container" class="card-body">
+                  <p class="empty-state">Location map visualization will appear here</p>
+                </div>
+              </div>
+              
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title">Details</h3>
+                </div>
+                <div class="card-body" id="location-details">
+                  <!-- Location details will be populated here -->
+                  <div class="empty-state">
+                    <p>Select a location to view details</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Assets panel (hidden by default) -->
+        <div id="assets-panel" class="hidden">
+          <div class="panel-header">
+            <h2 class="text-2xl font-semibold tracking-tight">Assets</h2>
+            <div class="flex gap-2">
+              <button class="btn btn-secondary app-region-no-drag">Import</button>
+              <button class="btn btn-success app-region-no-drag">Add Asset</button>
+            </div>
+          </div>
+          
+          <!-- Asset Categories Tabs -->
+          <div class="assets-tabs">
+            <button class="assets-tab active">Images</button>
+            <button class="assets-tab">Documents</button>
+            <button class="assets-tab">Audio</button>
+          </div>
+          
+          <!-- Asset Grid -->
+          <div id="assets-grid">
+            <!-- Assets will be displayed here -->
+            <div class="empty-state col-span-full">
+              <p>No assets uploaded yet</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Editor panel (hidden by default) -->
+        <div id="editor-panel" class="hidden">
+          <div class="panel-header">
+            <h2 class="text-2xl font-semibold tracking-tight">Chapter Editor</h2>
+            <div class="flex gap-2">
+              <button class="btn btn-secondary app-region-no-drag">Preview</button>
+              <button class="btn btn-primary app-region-no-drag">Save</button>
+            </div>
+          </div>
+          
+          <div id="editor-container-main">
+            <!-- Editor will be initialized here -->
+            <div class="empty-state">
+              <p>Loading editor...</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Settings panel (hidden by default) -->
+        <div id="settings-panel" class="hidden">
+          <h2 class="text-2xl font-semibold tracking-tight mb-6">Settings</h2>
+          
+          <div class="space-y-6">
+            <!-- AI Configuration Card -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">AI Configuration</h3>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label for="api-model" class="form-label">AI Model</label>
+                  <select id="api-model" class="form-select">
+                    <option>OpenAI GPT-4</option>
+                    <option>Anthropic Claude 3</option>
+                    <option selected>Anthropic Claude 3 Sonnet</option>
+                  </select>
+                </div>
+                
+                <div class="form-group">
+                  <label for="api-key" class="form-label">API Key</label>
+                  <input type="password" id="api-key" class="form-input" value="••••••••••••••••••••••" />
+                </div>
+                
+                <div class="form-group">
+                  <div class="flex justify-between items-center">
+                    <label for="temperature" class="form-label">Temperature</label>
+                    <span class="temperature-value">0.7</span>
+                  </div>
+                  <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7" class="form-range" />
+                  <div class="range-labels">
+                    <span>Precise</span>
+                    <span>Creative</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Editor Preferences Card -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Editor Preferences</h3>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label for="font-size" class="form-label">Font Size</label>
+                  <select id="font-size" class="form-select">
+                    <option>Small (12px)</option>
+                    <option selected>Medium (14px)</option>
+                    <option>Large (16px)</option>
+                    <option>Extra Large (18px)</option>
+                  </select>
+                </div>
+                
+                <div class="form-group">
+                  <label for="auto-save" class="form-label">Auto-save Interval (minutes)</label>
+                  <input type="number" id="auto-save" class="form-input" value="5" min="1" max="30" />
+                </div>
+                
+                <div class="form-group">
+                  <label for="dark-mode" class="form-label">
+                    <input type="checkbox" id="dark-mode" checked class="form-checkbox" />
+                    Dark Mode
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="flex justify-end mt-6 space-x-2">
+            <button class="btn btn-secondary app-region-no-drag">Cancel</button>
+            <button class="btn btn-primary app-region-no-drag">Save Settings</button>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Right chapter browser -->
-    <div id="chapter-browser" class="chapter-browser">
-      <div class="chapter-browser-header">
-        <h2>Chapters</h2>
-        <button id="add-chapter-btn">+ Add</button>
+    <div id="chapter-browser" class="h-full overflow-hidden pt-9">
+      <div class="flex h-12 items-center justify-between px-4 py-2 border-b bg-slate-900">
+        <h2 class="text-sm font-semibold tracking-tight uppercase">Chapters</h2>
+        <button id="add-chapter-btn" class="btn btn-success btn-sm app-region-no-drag">+ Add</button>
       </div>
-      <div id="chapters-list" class="chapters-list">
-        <!-- Chapters will be listed here -->
+      <div id="chapters-list" class="flex-1 overflow-y-auto p-3 space-y-2">
+        <!-- Chapters will be populated dynamically -->
+        <div class="empty-state">
+          <p>No chapters created yet</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Templates -->
+  
+  <!-- Generic Modal Template -->
+  <div id="modal-container" class="hidden">
+    <div class="modal-overlay">
+      <div class="modal">
+        <div class="modal-header">
+          <h2 id="modal-title" class="card-title">Modal Title</h2>
+          <button class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body" id="modal-content">
+          <!-- Modal content will be dynamically inserted here -->
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+          <button class="btn btn-primary" id="modal-confirm">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Add Character Modal Template -->
+  <div id="add-character-modal" class="hidden">
+    <div class="modal-overlay">
+      <div class="modal">
+        <div class="modal-header">
+          <h2 class="card-title">Add New Character</h2>
+          <button class="modal-close-btn" id="close-character-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="character-form" class="space-y-4">
+            <div class="form-group">
+              <label for="character-name" class="form-label">Name</label>
+              <input type="text" id="character-name" class="form-input" placeholder="Character name" />
+            </div>
+            
+            <div class="form-group">
+              <label for="character-role" class="form-label">Role</label>
+              <select id="character-role" class="form-select">
+                <option value="protagonist">Protagonist</option>
+                <option value="antagonist">Antagonist</option>
+                <option value="supporting">Supporting</option>
+                <option value="mentor">Mentor</option>
+                <option value="ally">Ally</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="character-description" class="form-label">Description</label>
+              <textarea id="character-description" class="form-textarea" placeholder="Character description"></textarea>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Traits</label>
+              <div class="flex flex-wrap gap-2" id="traits-container">
+                <div class="badge badge-outline">
+                  <span class="mr-1">Add traits</span>
+                  <button class="text-xs" type="button">+</button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary">Cancel</button>
+          <button class="btn btn-success" type="submit" form="character-form">Create Character</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Add Location Modal Template -->
+  <div id="add-location-modal" class="hidden">
+    <div class="modal-overlay">
+      <div class="modal">
+        <div class="modal-header">
+          <h2 class="card-title">Add New Location</h2>
+          <button class="modal-close-btn" id="close-location-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="location-form" class="space-y-4">
+            <div class="form-group">
+              <label for="location-name" class="form-label">Name</label>
+              <input type="text" id="location-name" class="form-input" placeholder="Location name" />
+            </div>
+            
+            <div class="form-group">
+              <label for="location-type" class="form-label">Type</label>
+              <select id="location-type" class="form-select">
+                <option value="city">City/Town</option>
+                <option value="wilderness">Wilderness</option>
+                <option value="landmark">Landmark</option>
+                <option value="building">Building</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="location-description" class="form-label">Description</label>
+              <textarea id="location-description" class="form-textarea" placeholder="Location description"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary">Cancel</button>
+          <button class="btn btn-success" type="submit" form="location-form">Create Location</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Add Chapter Modal Template -->
+  <div id="add-chapter-modal" class="hidden">
+    <div class="modal-overlay">
+      <div class="modal">
+        <div class="modal-header">
+          <h2 class="card-title">Add New Chapter</h2>
+          <button class="modal-close-btn" id="close-chapter-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="chapter-form" class="space-y-4">
+            <div class="form-group">
+              <label for="chapter-title" class="form-label">Title</label>
+              <input type="text" id="chapter-title" class="form-input" placeholder="Chapter title" />
+            </div>
+            
+            <div class="form-group">
+              <label for="chapter-number" class="form-label">Chapter Number</label>
+              <input type="number" id="chapter-number" class="form-input" placeholder="Chapter number" min="1" />
+            </div>
+            
+            <div class="form-group">
+              <label for="chapter-summary" class="form-label">Summary (Optional)</label>
+              <textarea id="chapter-summary" class="form-textarea" placeholder="Brief summary of this chapter"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary">Cancel</button>
+          <button class="btn btn-success" type="submit" form="chapter-form">Create Chapter</button>
+        </div>
       </div>
     </div>
   </div>

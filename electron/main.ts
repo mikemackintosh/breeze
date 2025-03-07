@@ -1,3 +1,4 @@
+// electron/main.ts
 import { app, BrowserWindow, ipcMain, dialog } from "electron";
 import * as path from "path";
 import * as fs from "fs";
@@ -15,6 +16,10 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
+    titleBarStyle: "hidden",
+    trafficLightPosition: { x: 15, y: 10 },
+    frame: process.platform !== "darwin", // Use frameless on macOS
+    backgroundColor: "#111827", // Dark background color from our theme
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -96,6 +101,28 @@ ipcMain.handle("open-file", async () => {
     return { success: true, content, filePath: filePaths[0] };
   } catch (error) {
     console.error("Failed to open file:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+});
+
+// Opens a specific file by path
+ipcMain.handle("open-file-by-path", async (_, filePath: string) => {
+  try {
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      return {
+        success: false,
+        error: "File not found",
+      };
+    }
+    
+    const content = fs.readFileSync(filePath, "utf8");
+    return { success: true, content, filePath };
+  } catch (error) {
+    console.error("Failed to open file by path:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : String(error),

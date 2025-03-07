@@ -1,3 +1,4 @@
+// electron/preload.ts
 import { contextBridge, ipcRenderer } from "electron";
 
 // Exposes protected APIs to the renderer process
@@ -7,6 +8,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("save-file", content, filePath),
 
   openFile: () => ipcRenderer.invoke("open-file"),
+  
+  openFileByPath: (filePath: string) => 
+    ipcRenderer.invoke("open-file-by-path", filePath),
 
   // App information
   getAppInfo: () => ipcRenderer.invoke("get-app-info"),
@@ -36,6 +40,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getConfig: () => ipcRenderer.invoke("get-config"),
   updateConfig: (config: any) => ipcRenderer.invoke("update-config", config),
   getAIConfig: () => ipcRenderer.invoke("get-ai-config"),
-  updateAIConfig: (config: any) =>
-    ipcRenderer.invoke("update-ai-config", config),
+  updateAIConfig: (config: any) => ipcRenderer.invoke("update-ai-config", config),
+  
+  // Auto-save and last file
+  updateLastOpenedFile: (filePath: string) => ipcRenderer.invoke("update-last-opened-file", filePath),
+  getLastOpenedFile: () => ipcRenderer.invoke("get-last-opened-file"),
+  getAutoLoadLastFile: () => ipcRenderer.invoke("get-auto-load-last-file"),
+  toggleAutoLoadLastFile: () => ipcRenderer.invoke("toggle-auto-load-last-file"),
 });

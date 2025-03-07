@@ -81,7 +81,7 @@ async function generateOpenAIContent(
     );
   }
 
-  const model = aiConfig.openaiModel || "gpt-4-turbo";
+  const model = aiConfig.openaiModel || "gpt-4o-mini";
 
   const response = await axios.post(
     "https://api.openai.com/v1/chat/completions",
@@ -165,7 +165,7 @@ async function generateAnthropicContent(
  * Constructs the system prompt with context information
  */
 function constructSystemPrompt(context: any): string {
-  let systemPrompt = `You are an AI writing assistant for fiction authors. 
+  let systemPrompt = `You are an AI writing assistant for both fiction and non-fiction authors. 
 Your goal is to help the author create compelling narratives, characters, and settings.
 Be creative, thoughtful, and provide high-quality writing assistance.
 
@@ -182,7 +182,7 @@ ${context.currentChapter}
 `;
   }
 
-  // Adds character information if available
+  // Adds general character information if available
   if (context.characters && context.characters.length > 0) {
     systemPrompt += `
 The story includes the following characters:
@@ -195,7 +195,43 @@ The story includes the following characters:
     systemPrompt += "\n";
   }
 
-  // Adds location information if available
+  // Adds detailed information for referenced characters (using @ notation)
+  if (context.referencedCharacters && context.referencedCharacters.length > 0) {
+    systemPrompt += `
+Referenced characters with detailed information:
+`;
+
+    context.referencedCharacters.forEach((character: any) => {
+      systemPrompt += `
+### ${character.name}
+Description: ${character.description || "No description available"}
+${
+  character.traits && character.traits.length > 0
+    ? `Traits: ${character.traits.join(", ")}`
+    : ""
+}
+${character.goals ? `Goals: ${character.goals}` : ""}
+${character.backstory ? `Backstory: ${character.backstory}` : ""}
+`;
+
+      // Add relationships if available
+      if (character.relationships && character.relationships.length > 0) {
+        systemPrompt += `\nRelationships:\n`;
+        character.relationships.forEach((rel: any) => {
+          const relatedChar = context.characters.find(
+            (c: any) => c.id === rel.characterId
+          );
+          if (relatedChar) {
+            systemPrompt += `- ${relatedChar.name}: ${rel.type} - ${rel.description}\n`;
+          }
+        });
+      }
+
+      systemPrompt += "\n";
+    });
+  }
+
+  // Adds general location information if available
   if (context.locations && context.locations.length > 0) {
     systemPrompt += `
 The story includes the following locations:
@@ -206,6 +242,57 @@ The story includes the following locations:
     });
 
     systemPrompt += "\n";
+  }
+
+  // Adds detailed information for referenced locations (using @ notation)
+  if (context.referencedLocations && context.referencedLocations.length > 0) {
+    systemPrompt += `
+Referenced locations with detailed information:
+`;
+
+    context.referencedLocations.forEach((location: any) => {
+      systemPrompt += `
+### ${location.name}
+Description: ${location.description || "No description available"}
+${location.locationType ? `Type: ${location.locationType}` : ""}
+${location.geography ? `Geography: ${location.geography}` : ""}
+${location.climate ? `Climate: ${location.climate}` : ""}
+${location.culture ? `Culture: ${location.culture}` : ""}
+${location.notes ? `Notes: ${location.notes}` : ""}
+`;
+
+      // Add connections if available
+      if (location.connections && location.connections.length > 0) {
+        systemPrompt += `\nConnections to other locations:\n`;
+        location.connections.forEach((conn: any) => {
+          const connectedLoc = context.locations.find(
+            (l: any) => l.id === conn.locationId
+          );
+          if (connectedLoc) {
+            systemPrompt += `- ${connectedLoc.name}: ${conn.description}\n`;
+          }
+        });
+      }
+
+      systemPrompt += "\n";
+    });
+  }
+
+  // Add referenced chapter content
+  if (context.referencedChapters && context.referencedChapters.length > 0) {
+    systemPrompt += `
+Referenced chapters:
+`;
+
+    context.referencedChapters.forEach((chapter: any) => {
+      systemPrompt += `
+### Chapter ${chapter.index + 1}: ${chapter.title}
+---
+${chapter.content}
+---
+
+`;
+    });
   }
 
   systemPrompt += `
