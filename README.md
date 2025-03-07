@@ -69,6 +69,11 @@ Breeze is built with:
 
 Please refer to the [Style Guide](STYLE_GUIDE.md) for UI component usage and design patterns.
 
+# AI Failures and Observations
+- Claude generates a lot of duplicative and unnecessary code.
+- Could not figure out how to implement Tailwindcss with Webpack, Postcss and Electron.
+
 ## License
 
 MIT
+

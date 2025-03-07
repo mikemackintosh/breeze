@@ -733,18 +733,20 @@ function switchView(view: string) {
   const sidebarTitle = document.querySelector("#chapter-browser h2");
   const addChapterBtn = document.getElementById("add-chapter-btn");
 
-  // Forcefully hide the editor content
+  // Hide all panels first
   editorContent.classList.add("hidden");
-
-  // Also hide at the style level to override any potential CSS conflicts
   editorContent.style.display = "none";
+  panelContent.classList.add("hidden");
+  
+  // Hide all specific panels in the panel content
+  document.querySelectorAll("#panel-content > div").forEach(panel => {
+    panel.classList.add("hidden");
+  });
 
-  // Shows/hides the appropriate content areas
   if (view === "editor") {
-    // Show editor and hide panel content
+    // Show editor
     editorContent.classList.remove("hidden");
     editorContent.style.display = "block";
-    panelContent.classList.add("hidden");
 
     // Refresh editor to ensure content is displayed properly
     if (editor) {
@@ -760,20 +762,23 @@ function switchView(view: string) {
     }
     if (addChapterBtn) {
       addChapterBtn.textContent = "+ Add";
-      // Restore the original event listener
-      addChapterBtn.replaceWith(addChapterBtn.cloneNode(true));
-      document
-        .getElementById("add-chapter-btn")
-        ?.addEventListener("click", addNewChapter);
+      // Replace with original event listener
+      const newBtn = addChapterBtn.cloneNode(true);
+      addChapterBtn.parentNode?.replaceChild(newBtn, addChapterBtn);
+      newBtn.addEventListener("click", addNewChapter);
     }
 
     // Render chapter list
     renderChaptersList();
   } else {
-    // Hide editor and show panel content
-    editorContent.style.display = "none";
-    editorContent.classList.add("hidden");
+    // Show panel content but not the editor
     panelContent.classList.remove("hidden");
+    
+    // Show the specific panel for this view
+    const specificPanel = document.getElementById(`${view}-panel`);
+    if (specificPanel) {
+      specificPanel.classList.remove("hidden");
+    }
 
     // Update sidebar based on view
     if (view === "characters") {
@@ -786,13 +791,12 @@ function switchView(view: string) {
       }
       if (addChapterBtn) {
         addChapterBtn.textContent = "+ Add Character";
-        // Replace with add character event listener
-        addChapterBtn.replaceWith(addChapterBtn.cloneNode(true));
-        document
-          .getElementById("add-chapter-btn")
-          ?.addEventListener("click", () => {
-            showCharacterDialog();
-          });
+        // Replace with character dialog event listener
+        const newBtn = addChapterBtn.cloneNode(true);
+        addChapterBtn.parentNode?.replaceChild(newBtn, addChapterBtn);
+        newBtn.addEventListener("click", () => {
+          showCharacterDialog();
+        });
       }
 
       // Render character list in sidebar
@@ -807,13 +811,12 @@ function switchView(view: string) {
       }
       if (addChapterBtn) {
         addChapterBtn.textContent = "+ Add Location";
-        // Replace with add location event listener
-        addChapterBtn.replaceWith(addChapterBtn.cloneNode(true));
-        document
-          .getElementById("add-chapter-btn")
-          ?.addEventListener("click", () => {
-            showLocationDialog();
-          });
+        // Replace with location dialog event listener
+        const newBtn = addChapterBtn.cloneNode(true);
+        addChapterBtn.parentNode?.replaceChild(newBtn, addChapterBtn);
+        newBtn.addEventListener("click", () => {
+          showLocationDialog();
+        });
       }
 
       // Render locations list in sidebar
@@ -825,29 +828,38 @@ function switchView(view: string) {
       }
     }
 
+    // Initialize panel content if needed
     renderPanelContent(view);
   }
 }
 
 /**
- * Renders content for different panels
+ * Initializes or updates content for different panels
+ * Uses existing HTML structure in index.html instead of recreating it
  */
 function renderPanelContent(panel: string) {
+  // The panel structure exists in HTML, we just need to activate the specific panel
+  // and add event listeners or dynamic content
   switch (panel) {
     case "characters":
-      renderCharactersPanel();
+      // Initialize character panel event listeners and data
+      initializeCharactersPanel();
       break;
     case "locations":
-      renderLocationsPanel();
+      // Initialize locations panel event listeners and data
+      initializeLocationsPanel();
       break;
     case "assets":
-      renderAssetsPanel();
+      // Initialize assets panel event listeners and data
+      initializeAssetsPanel();
       break;
     case "ai":
-      renderAIPanel();
+      // Initialize AI panel event listeners and data
+      initializeAIPanel();
       break;
     case "settings":
-      renderSettingsPanel();
+      // Initialize settings panel event listeners and data
+      initializeSettingsPanel();
       break;
   }
 }
@@ -1142,44 +1154,51 @@ function showCharacterDetails(characterId: number) {
 }
 
 /**
- * Renders the characters panel - now focusing on the relationship graph
+ * Initializes the characters panel
+ * Uses existing HTML structure in index.html
  */
-function renderCharactersPanel() {
-  panelContent.innerHTML = `
-    <div class="panel-header">
-      <h2>Character Relationships</h2>
-      <div class="panel-actions">
-        <button id="add-relationship-btn" class="action-btn">Add Relationship</button>
-      </div>
-    </div>
-    <div class="character-graph-container">
-      ${
-        state.characters.length > 0
-          ? `<div id="character-graph-container" class="relationship-graph"></div>
-           <div class="graph-legend">
-             <h3>Legend</h3>
-             <div class="legend-item">
-               <span class="legend-color friend"></span> Friend
-             </div>
-             <div class="legend-item">
-               <span class="legend-color family"></span> Family
-             </div>
-             <div class="legend-item">
-               <span class="legend-color rival"></span> Rival
-             </div>
-             <div class="legend-item">
-               <span class="legend-color enemy"></span> Enemy
-             </div>
-           </div>`
-          : "<div class='empty-state'>Add characters to start creating relationship connections</div>"
-      }
-    </div>
-  `;
-
-  // Add relationship button event
-  const addRelationshipBtn = document.getElementById("add-relationship-btn");
+function initializeCharactersPanel() {
+  const charactersPanel = document.getElementById("characters-panel");
+  if (!charactersPanel) return;
+  
+  // Reference the existing HTML structure
+  const addCharacterBtn = charactersPanel.querySelector(".btn-success");
+  const characterGrid = document.getElementById("characters-grid");
+  const relationshipGraph = document.getElementById("relationship-graph-container");
+  
+  // Set up the add character button
+  if (addCharacterBtn) {
+    // Reset event listeners
+    const newAddBtn = addCharacterBtn.cloneNode(true);
+    addCharacterBtn.parentNode?.replaceChild(newAddBtn, addCharacterBtn);
+    
+    // Add new event listener
+    newAddBtn.addEventListener("click", () => {
+      showCharacterDialog();
+    });
+  }
+  
+  // Create an add relationship button if it doesn't exist
+  let addRelationshipBtn = charactersPanel.querySelector(".panel-header .panel-actions button");
+  if (!addRelationshipBtn) {
+    const panelActions = charactersPanel.querySelector(".panel-header .panel-actions");
+    if (panelActions) {
+      addRelationshipBtn = document.createElement("button");
+      addRelationshipBtn.textContent = "Add Relationship";
+      addRelationshipBtn.className = "action-btn app-region-no-drag";
+      addRelationshipBtn.id = "add-relationship-btn";
+      panelActions.appendChild(addRelationshipBtn);
+    }
+  }
+  
+  // Set up add relationship button
   if (addRelationshipBtn) {
-    addRelationshipBtn.addEventListener("click", () => {
+    // Reset event listeners
+    const newRelationshipBtn = addRelationshipBtn.cloneNode(true);
+    addRelationshipBtn.parentNode?.replaceChild(newRelationshipBtn, addRelationshipBtn);
+    
+    // Add relationship button event
+    newRelationshipBtn.addEventListener("click", () => {
       if (state.characters.length < 2) {
         alert("You need at least two characters to create a relationship.");
         return;
@@ -1191,10 +1210,78 @@ function renderCharactersPanel() {
       showRelationshipDialog(defaultCharacterId);
     });
   }
-
-  // Initialize character relationship graph
-  if (state.characters.length > 0) {
-    initializeCharacterGraph();
+  
+  // Update characters grid
+  if (characterGrid) {
+    if (state.characters.length > 0) {
+      characterGrid.innerHTML = state.characters.map(char => `
+        <div class="character-card" data-id="${char.id}">
+          <h3>${char.name}</h3>
+          <div class="character-role">${char.role || "Unknown"}</div>
+          <p>${char.description ? char.description.substring(0, 100) + (char.description.length > 100 ? "..." : "") : "No description"}</p>
+          <div class="character-traits">
+            ${char.traits && char.traits.length > 0 ? 
+              char.traits.slice(0, 3).map(trait => `<span class="badge">${trait}</span>`).join("") +
+              (char.traits.length > 3 ? `<span class="badge badge-more">+${char.traits.length - 3}</span>` : "")
+              : '<span class="empty-traits">No traits</span>'}
+          </div>
+        </div>
+      `).join("");
+      
+      // Add click event to character cards
+      document.querySelectorAll(".character-card").forEach(card => {
+        card.addEventListener("click", () => {
+          const id = parseInt(card.getAttribute("data-id") || "0");
+          if (id) {
+            showCharacterDetails(id);
+          }
+        });
+      });
+    } else {
+      characterGrid.innerHTML = `<div class="empty-state col-span-3"><p>No characters created yet</p></div>`;
+    }
+  }
+  
+  // Initialize the relationship graph
+  if (relationshipGraph) {
+    if (state.characters.length > 0) {
+      // Create SVG container if needed
+      let graphSvgContainer = relationshipGraph.querySelector(".relationship-graph-svg");
+      if (!graphSvgContainer) {
+        // Clear the existing content first
+        relationshipGraph.innerHTML = "";
+        
+        // Create graph container
+        graphSvgContainer = document.createElement("div");
+        graphSvgContainer.className = "relationship-graph-svg";
+        relationshipGraph.appendChild(graphSvgContainer);
+        
+        // Add legend
+        const legendDiv = document.createElement("div");
+        legendDiv.className = "graph-legend";
+        legendDiv.innerHTML = `
+          <h3>Legend</h3>
+          <div class="legend-item">
+            <span class="legend-color friend"></span> Friend
+          </div>
+          <div class="legend-item">
+            <span class="legend-color family"></span> Family
+          </div>
+          <div class="legend-item">
+            <span class="legend-color rival"></span> Rival
+          </div>
+          <div class="legend-item">
+            <span class="legend-color enemy"></span> Enemy
+          </div>
+        `;
+        relationshipGraph.appendChild(legendDiv);
+      }
+      
+      // Initialize the character graph
+      initializeCharacterGraph();
+    } else {
+      relationshipGraph.innerHTML = "<div class='empty-state'>Add characters to start creating relationship connections</div>";
+    }
   }
 }
 
@@ -1741,7 +1828,7 @@ function showCharacterDialog(characterId?: number) {
 
             // Re-render characters panel if currently visible
             if (state.currentView === "characters") {
-              renderCharactersPanel();
+              initializeCharactersPanel();
             }
 
             // Close modal
@@ -1779,7 +1866,8 @@ function showCharacterDialog(characterId?: number) {
  * Initializes the character relationship graph
  */
 function initializeCharacterGraph() {
-  const graphContainer = document.getElementById("character-graph-container");
+  // Use relationship-graph-container which is the ID in the HTML
+  const graphContainer = document.getElementById("relationship-graph-container");
   if (!graphContainer) return;
 
   // Clear any existing content
@@ -2011,72 +2099,177 @@ function showLocationDetails(locationId: number) {
 }
 
 /**
- * Renders the locations panel - focusing on location map visualization
+ * Initializes the locations panel
+ * Uses existing HTML structure in index.html
  */
-function renderLocationsPanel() {
-  panelContent.innerHTML = `
-    <div class="panel-header">
-      <h2>World Map</h2>
-      <div class="panel-actions">
-        <button id="add-location-connection-btn" class="action-btn">Add Connection</button>
-        <button id="add-location-btn" class="action-btn">Add Location</button>
-      </div>
-    </div>
-    <div class="location-map-container">
-      ${
-        state.locations.length > 0
-          ? `<div id="location-map" class="location-map"></div>
-           <div class="map-legend">
-             <h3>Legend</h3>
-             <div class="legend-item">
-               <span class="legend-color city"></span> City
-             </div>
-             <div class="legend-item">
-               <span class="legend-color wilderness"></span> Wilderness
-             </div>
-             <div class="legend-item">
-               <span class="legend-color landmark"></span> Landmark
-             </div>
-             <div class="legend-item">
-               <span class="legend-color building"></span> Building
-             </div>
-           </div>`
-          : "<div class='empty-state'>Add locations to start building your world map</div>"
-      }
-    </div>
-    <div class="location-detail-sidebar">
-      <div id="selected-location-details" class="selected-location-details">
-        <div class="empty-selection">Select a location from the sidebar to view details</div>
-      </div>
-    </div>
-  `;
-
-  // Add location button event
-  const addLocationBtn = document.getElementById("add-location-btn");
+function initializeLocationsPanel() {
+  const locationsPanel = document.getElementById("locations-panel");
+  if (!locationsPanel) return;
+  
+  // Reference existing HTML elements
+  const addLocationBtn = locationsPanel.querySelector(".btn-success");
+  const locationsList = document.getElementById("locations-list");
+  const locationMapContainer = document.getElementById("location-map-container");
+  const locationDetails = document.getElementById("location-details");
+  const selectedLocationName = document.getElementById("selected-location-name");
+  
+  // Set up add location button
   if (addLocationBtn) {
-    addLocationBtn.addEventListener("click", () => {
+    // Reset event listeners
+    const newAddBtn = addLocationBtn.cloneNode(true);
+    addLocationBtn.parentNode?.replaceChild(newAddBtn, addLocationBtn);
+    
+    // Add new event listener
+    newAddBtn.addEventListener("click", () => {
       showLocationDialog();
     });
   }
+  
+  // Update locations list
+  if (locationsList) {
+    if (state.locations.length > 0) {
+      locationsList.innerHTML = state.locations.map(location => `
+        <div class="location-item" data-id="${location.id}">
+          <div class="location-name">${location.name}</div>
+          <div class="location-type ${location.locationType || 'unknown'}">${location.locationType || 'Unknown'}</div>
+        </div>
+      `).join("");
+      
+      // Add click event to location items
+      document.querySelectorAll(".location-item").forEach(item => {
+        item.addEventListener("click", () => {
+          const id = parseInt(item.getAttribute("data-id") || "0");
+          if (id) {
+            // Select the location and show details
+            selectLocation(id);
+            
+            // Update the name in the map header
+            if (selectedLocationName) {
+              const location = state.locations.find(l => l.id === id);
+              if (location) {
+                selectedLocationName.textContent = location.name;
+              }
+            }
+            
+            // Show location details
+            if (locationDetails) {
+              renderLocationDetailsToElement(id, locationDetails);
+            }
+          }
+        });
+      });
+    } else {
+      locationsList.innerHTML = `<div class="empty-state"><p>No locations created yet</p></div>`;
+    }
+  }
+  
+  // Initialize the location map visualization
+  if (locationMapContainer && state.locations.length > 0) {
+    // Clear existing content
+    locationMapContainer.innerHTML = `<div id="location-map" class="location-map"></div>`;
+    initializeLocationMap();
+  } else if (locationMapContainer) {
+    locationMapContainer.innerHTML = `<div class="empty-state">Add locations to start building your world map</div>`;
+  }
+  
+  // Show empty detail state
+  if (locationDetails && selectedLocationName) {
+    selectedLocationName.textContent = "Select a Location";
+    locationDetails.innerHTML = `<div class="empty-state"><p>Select a location to view details</p></div>`;
+  }
+}
 
-  // Add connection button event
-  const addConnectionBtn = document.getElementById(
-    "add-location-connection-btn"
-  );
-  if (addConnectionBtn) {
-    addConnectionBtn.addEventListener("click", () => {
-      if (state.locations.length < 2) {
-        alert("You need at least two locations to create a connection.");
-        return;
+/**
+ * Renders location details to a specified element
+ * Helper function for initializeLocationsPanel
+ */
+function renderLocationDetailsToElement(locationId: number, container: HTMLElement) {
+  const location = state.locations.find(l => l.id === locationId);
+  if (!location || !container) return;
+  
+  container.innerHTML = `
+    <div class="location-detail">
+      <div class="detail-section">
+        <h4>Description</h4>
+        <p>${location.description || "No description provided."}</p>
+      </div>
+      
+      ${location.geography ? `
+      <div class="detail-section">
+        <h4>Geography</h4>
+        <p>${location.geography}</p>
+      </div>
+      ` : ''}
+      
+      ${location.climate ? `
+      <div class="detail-section">
+        <h4>Climate</h4>
+        <p>${location.climate}</p>
+      </div>
+      ` : ''}
+      
+      ${location.culture ? `
+      <div class="detail-section">
+        <h4>Culture</h4>
+        <p>${location.culture}</p>
+      </div>
+      ` : ''}
+      
+      ${location.notes ? `
+      <div class="detail-section">
+        <h4>Notes</h4>
+        <p>${location.notes}</p>
+      </div>
+      ` : ''}
+      
+      <div class="detail-section">
+        <div class="section-header">
+          <h4>Connected Locations</h4>
+          <button class="add-connection-btn action-btn small" data-id="${location.id}">+ Add</button>
+        </div>
+        <div class="connection-list">
+          ${location.connections && location.connections.length > 0 
+            ? location.connections.map(conn => {
+                const connectedLocation = state.locations.find(l => l.id === conn.locationId);
+                return connectedLocation ? `
+                  <div class="connection-item">
+                    <div class="connection-info">
+                      <span class="connection-type">${conn.type}:</span>
+                      <span class="connection-name">${connectedLocation.name}</span>
+                    </div>
+                  </div>
+                ` : '';
+              }).join("")
+            : '<p class="empty-list">No connections.</p>'
+          }
+        </div>
+      </div>
+      
+      <div class="actions">
+        <button class="btn edit-location-btn" data-id="${location.id}">Edit Location</button>
+      </div>
+    </div>
+  `;
+  
+  // Add event listeners to buttons within the details
+  const editBtn = container.querySelector(".edit-location-btn");
+  if (editBtn) {
+    editBtn.addEventListener("click", () => {
+      const id = parseInt(editBtn.getAttribute("data-id") || "0");
+      if (id) {
+        showLocationDialog(id);
       }
-      // No specific location is pre-selected, so we'll create a new connection
-      showLocationConnectionDialog();
     });
   }
-
-  // Initialize the location map visualization
-  if (state.locations.length > 0) {
-    initializeLocationMap();
+  
+  const addConnectionBtn = container.querySelector(".add-connection-btn");
+  if (addConnectionBtn) {
+    addConnectionBtn.addEventListener("click", () => {
+      const id = parseInt(addConnectionBtn.getAttribute("data-id") || "0");
+      if (id) {
+        showLocationConnectionDialog(id);
+      }
+    });
   }
 }
 
@@ -2801,7 +2994,7 @@ function ensureLocationsPanelInitialized() {
 
   if (!locationMap || !detailsContainer) {
     // If the panel isn't initialized, render it first
-    renderLocationsPanel();
+    initializeLocationsPanel();
   }
 }
 
@@ -3019,7 +3212,7 @@ function showLocationDialog(locationId?: number) {
           // Re-render locations if currently visible
           if (state.currentView === "locations") {
             renderLocationsList();
-            renderLocationsPanel(); // First update the main panel
+            initializeLocationsPanel(); // First update the main panel
             renderLocationDetails(updatedLocation.id); // Then show the selected location details
 
             // Also select the location in the sidebar
@@ -3052,50 +3245,132 @@ function showLocationDialog(locationId?: number) {
 }
 
 /**
- * Renders the assets panel
+ * Initializes the assets panel
+ * Uses existing HTML structure in index.html
  */
-function renderAssetsPanel() {
-  panelContent.innerHTML = `
-    <div class="panel-header">
-      <h2>Assets</h2>
-      <div class="panel-actions">
-        <button id="add-asset-btn" class="action-btn">Add Asset</button>
-      </div>
-    </div>
-    <div class="assets-grid">
-      ${
-        state.assets.length > 0
-          ? state.assets
-              .map(
-                (asset) => `
-        <div class="asset-item" data-id="${asset.id}">
-          <img class="asset-preview" src="${asset.path}" alt="${asset.name}">
-          <span>${asset.name}</span>
-        </div>
-      `
-              )
-              .join("")
-          : "<p>No assets yet. Add one to get started.</p>"
-      }
-    </div>
-  `;
-
-  const addAssetBtn = document.getElementById("add-asset-btn");
+function initializeAssetsPanel() {
+  const assetsPanel = document.getElementById("assets-panel");
+  if (!assetsPanel) return;
+  
+  // Reference existing HTML elements
+  const addAssetBtn = assetsPanel.querySelector(".btn-success");
+  const importBtn = assetsPanel.querySelector(".btn-secondary");
+  const assetsGrid = document.getElementById("assets-grid");
+  const assetTabs = document.querySelectorAll(".assets-tab");
+  
+  // Set up add asset button
   if (addAssetBtn) {
-    addAssetBtn.addEventListener("click", () => {
-      // Opens asset import dialog
+    // Reset event listeners
+    const newAddBtn = addAssetBtn.cloneNode(true);
+    addAssetBtn.parentNode?.replaceChild(newAddBtn, addAssetBtn);
+    
+    // Add new event listener
+    newAddBtn.addEventListener("click", () => {
       showAssetDialog();
     });
+  }
+  
+  // Set up import button
+  if (importBtn) {
+    // Reset event listeners
+    const newImportBtn = importBtn.cloneNode(true);
+    importBtn.parentNode?.replaceChild(newImportBtn, importBtn);
+    
+    // Add new event listener
+    newImportBtn.addEventListener("click", () => {
+      // Import assets dialog - would typically open file picker
+      showAssetDialog('import');
+    });
+  }
+  
+  // Set up asset tabs
+  assetTabs.forEach(tab => {
+    // Clone to reset event listeners
+    const newTab = tab.cloneNode(true);
+    tab.parentNode?.replaceChild(newTab, tab);
+    
+    // Add tab switching functionality
+    newTab.addEventListener("click", () => {
+      // Remove active class from all tabs
+      assetTabs.forEach(t => (t as HTMLElement).classList.remove("active"));
+      
+      // Add active class to clicked tab
+      (newTab as HTMLElement).classList.add("active");
+      
+      // Here you would also filter the assets by type
+      // For this example, we'll just update the grid with the same assets
+      if (assetsGrid) {
+        updateAssetsGrid(assetsGrid);
+      }
+    });
+  });
+  
+  // Update assets grid
+  if (assetsGrid) {
+    updateAssetsGrid(assetsGrid);
   }
 }
 
 /**
- * Shows asset import dialog
+ * Updates the assets grid with current asset data
+ * Helper function for initializeAssetsPanel
  */
-function showAssetDialog() {
-  // Asset import dialog implementation
-  console.log("Asset import dialog opened");
+function updateAssetsGrid(container: HTMLElement) {
+  if (!container) return;
+  
+  if (state.assets.length > 0) {
+    container.innerHTML = state.assets.map(asset => `
+      <div class="asset-item" data-id="${asset.id}">
+        <div class="asset-preview">
+          <img src="${asset.path}" alt="${asset.name}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWZpbGUiPjxyZWN0IHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgeD0iMyIgeT0iMyIgcng9IjIiIHJ5PSIyIi8+PHBhdGggZD0iTTggOGg4Ii8+PHBhdGggZD0iTTggMTJoOCIvPjxwYXRoIGQ9Ik04IDE2aDgiLz48L3N2Zz4='">
+        </div>
+        <div class="asset-name">${asset.name}</div>
+        <div class="asset-meta">${asset.originalName ? asset.originalName : asset.path.split('/').pop() || ''}</div>
+      </div>
+    `).join("");
+    
+    // Add click handler for assets
+    const assetItems = container.querySelectorAll(".asset-item");
+    assetItems.forEach(item => {
+      item.addEventListener("click", () => {
+        const id = parseInt(item.getAttribute("data-id") || "0");
+        if (id) {
+          showAssetDetails(id);
+        }
+      });
+    });
+  } else {
+    container.innerHTML = `<div class="empty-state col-span-full"><p>No assets uploaded yet</p></div>`;
+  }
 }
+
+/**
+ * Shows asset details or launches import dialog
+ */
+function showAssetDialog(mode = 'add') {
+  // In a real implementation, this would show a modal for asset import or creation
+  if (mode === 'import') {
+    console.log("Asset import dialog would open here");
+    alert("Asset import functionality not yet implemented");
+  } else {
+    console.log("Add asset dialog would open here");
+    alert("Add asset functionality not yet implemented");
+  }
+}
+
+/**
+ * Shows details for a specific asset
+ */
+function showAssetDetails(assetId: number) {
+  const asset = state.assets.find(a => a.id === assetId);
+  if (!asset) return;
+  
+  // In a real implementation, this would show a modal with asset details
+  console.log("Showing details for asset:", asset);
+  alert(`Asset details for ${asset.name} would be shown in a modal`);
+}
+
+// We've already defined a new version of this function above
 
 // Define the interface for conversation history items
 interface ConversationItem {
@@ -3211,25 +3486,15 @@ function renderMarkdown(markdown: string): string {
 }
 
 /**
- * Renders the AI assistant panel
+ * Initializes the AI assistant panel
+ * Uses existing HTML structure in index.html instead of creating it dynamically
  */
-function renderAIPanel() {
-  console.log('Rendering AI panel');
-  
-  // Using the structure from HTML instead of generating it dynamically
-  // This ensures IDs match exactly with what's in the HTML file
-  
-  // Just make sure the panel is visible but don't recreate it
-  const aiPanel = document.getElementById("ai-panel");
-  if (aiPanel) {
-    aiPanel.classList.remove("hidden");
-  }
+function initializeAIPanel() {
+  // Make sure AI panel is visible - this is handled by switchView now
   
   // Update the right sidebar for conversation history
   const chapterBrowser = document.getElementById("chapter-browser");
   if (chapterBrowser) {
-    console.log('Setting up conversation history sidebar');
-    
     // Update the sidebar header
     const sidebarTitle = chapterBrowser.querySelector("h2");
     if (sidebarTitle) {
@@ -3243,13 +3508,12 @@ function renderAIPanel() {
       addBtn.classList.remove("btn-success");
       addBtn.classList.add("btn-ghost");
       
-      // Replace the original event listener
+      // Replace the button with a new one to reset event listeners
       const newBtn = addBtn.cloneNode(true);
       addBtn.parentNode?.replaceChild(newBtn, addBtn);
       
       // Add the new clear history event listener
       newBtn.addEventListener("click", () => {
-        console.log('Clear history button clicked');
         if (confirm("Are you sure you want to clear all conversation history?")) {
           conversationHistory.length = 0;
           renderConversationHistoryList();
@@ -3267,54 +3531,50 @@ function renderAIPanel() {
       addConversationItemListeners();
     }
   }
-
-  // Log to debug
-  console.log('Initializing AI Panel');
   
+  // Get UI elements
   const aiSubmitBtn = document.getElementById("generate-ai-btn");
-  console.log('aiSubmitBtn found:', !!aiSubmitBtn);
-  
   const aiPromptInput = document.getElementById("ai-prompt") as HTMLTextAreaElement;
-  console.log('aiPromptInput found:', !!aiPromptInput);
-  
   const aiResponseDisplay = document.getElementById("ai-response-display");
-  console.log('aiResponseDisplay found:', !!aiResponseDisplay);
-
-  // Get tab buttons and content containers
   const renderedTab = document.getElementById("rendered-tab");
-  console.log('renderedTab found:', !!renderedTab);
-  
   const rawTab = document.getElementById("raw-tab");
-  console.log('rawTab found:', !!rawTab);
-  
   const aiResponseRaw = document.getElementById("ai-response-raw");
-  console.log('aiResponseRaw found:', !!aiResponseRaw);
   
   // Set up tab switching
   if (renderedTab && rawTab && aiResponseRaw && aiResponseDisplay) {
-    renderedTab.addEventListener("click", () => {
-      renderedTab.classList.add("active");
-      rawTab.classList.remove("active");
+    // Clone buttons to reset event listeners
+    const newRenderedTab = renderedTab.cloneNode(true);
+    const newRawTab = rawTab.cloneNode(true);
+    
+    renderedTab.parentNode?.replaceChild(newRenderedTab, renderedTab);
+    rawTab.parentNode?.replaceChild(newRawTab, rawTab);
+    
+    // Add tab switching event listeners
+    newRenderedTab.addEventListener("click", () => {
+      (newRenderedTab as HTMLElement).classList.add("active");
+      (newRawTab as HTMLElement).classList.remove("active");
       aiResponseDisplay.classList.remove("hidden");
       aiResponseRaw.classList.add("hidden");
     });
     
-    rawTab.addEventListener("click", () => {
-      rawTab.classList.add("active");
-      renderedTab.classList.remove("active");
+    newRawTab.addEventListener("click", () => {
+      (newRawTab as HTMLElement).classList.add("active");
+      (newRenderedTab as HTMLElement).classList.remove("active");
       aiResponseRaw.classList.remove("hidden");
       aiResponseDisplay.classList.add("hidden");
     });
   }
 
-  console.log('Adding click handler to Generate button');
+  // Set up generate button
   if (aiSubmitBtn && aiPromptInput && aiResponseDisplay && aiResponseRaw) {
-    aiSubmitBtn.addEventListener("click", async () => {
-      console.log('Generate button clicked!');
+    // Clone button to reset event listeners
+    const newAiSubmitBtn = aiSubmitBtn.cloneNode(true);
+    aiSubmitBtn.parentNode?.replaceChild(newAiSubmitBtn, aiSubmitBtn);
+    
+    // Add click handler for AI generation
+    newAiSubmitBtn.addEventListener("click", async () => {
       const prompt = aiPromptInput.value.trim();
-      console.log('Prompt value:', prompt);
       if (!prompt) {
-        console.log('Empty prompt, returning');
         return;
       }
 
@@ -3939,7 +4199,7 @@ async function initialize() {
   // Initializes the editor
   initializeEditor();
 
-  // Sets up event listeners
+  // Sets up event listeners for toolbar sections
   toolbarSections.forEach((section) => {
     section.addEventListener("click", () => {
       const sectionName = section.getAttribute("data-section");
@@ -3949,6 +4209,7 @@ async function initialize() {
     });
   });
 
+  // Set up save button
   saveBtn.addEventListener("click", () => saveDocument());
 
   // Set up Save As button and dropdown functionality
@@ -3980,6 +4241,8 @@ async function initialize() {
 
   // Try loading the last opened file if auto-load is enabled
   await loadLastOpenedFile();
+  
+  // Set up open button and add chapter button
   openBtn.addEventListener("click", openDocument);
   addChapterBtn.addEventListener("click", addNewChapter);
 
@@ -4007,6 +4270,14 @@ async function initialize() {
   // Load stored data
   await Promise.all([loadCharacters(), loadLocations()]);
 
+  // Initialize all panels once at startup
+  // This pre-initializes HTML panels so they're ready when needed
+  initializeAIPanel();
+  initializeCharactersPanel();
+  initializeLocationsPanel();
+  initializeAssetsPanel();
+  initializeSettingsPanel();
+
   // Initializes the UI
   updateFileInfo();
   renderChaptersList();
@@ -4033,220 +4304,150 @@ async function initialize() {
 document.addEventListener("DOMContentLoaded", initialize);
 
 // Declares the Electron API interface
-// Settings panel rendering
-function renderSettingsPanel() {
-  panelContent.innerHTML = `
-    <div class="settings-container">
-      <h2>Settings</h2>
-      
-      <div class="settings-section">
-        <h3>AI Configuration</h3>
-        <div class="form-group">
-          <label for="ai-provider">AI Provider</label>
-          <select id="ai-provider">
-            <option value="openai">OpenAI</option>
-            <option value="anthropic">Anthropic Claude</option>
-          </select>
-        </div>
-        
-        <div id="openai-settings">
-          <div class="form-group">
-            <label for="openai-api-key">OpenAI API Key</label>
-            <input type="password" id="openai-api-key" placeholder="sk-...">
-          </div>
-          <div class="form-group">
-            <label for="openai-model">OpenAI Model</label>
-            <select id="openai-model">
-              <option value="gpt-4o-mini">GPT-4o Mini</option>
-              <option value="gpt-4">GPT-4</option>
-              <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-            </select>
-          </div>
-        </div>
-        
-        <div id="anthropic-settings" style="display: none;">
-          <div class="form-group">
-            <label for="anthropic-api-key">Anthropic API Key</label>
-            <input type="password" id="anthropic-api-key" placeholder="sk-ant-...">
-          </div>
-          <div class="form-group">
-            <label for="anthropic-model">Claude Model</label>
-            <select id="anthropic-model">
-              <option value="claude-3-opus">Claude 3 Opus</option>
-              <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
-              <option value="claude-3-haiku">Claude 3 Haiku</option>
-            </select>
-          </div>
-        </div>
-        
-        <button id="save-ai-settings" class="btn primary">Save AI Settings</button>
-      </div>
-      
-      <div class="settings-section">
-        <h3>Editor Preferences</h3>
-        <div class="form-group">
-          <label for="theme-select">Theme</label>
-          <select id="theme-select">
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="font-size">Font Size</label>
-          <input type="number" id="font-size" min="12" max="24" value="16">
-        </div>
-        <button id="save-editor-settings" class="btn primary">Save Editor Settings</button>
-      </div>
-    </div>
-  `;
-
-  // Gets the current configuration
+/**
+ * Initializes the settings panel
+ * Uses existing HTML structure in index.html instead of creating it dynamically
+ */
+function initializeSettingsPanel() {
+  // The settings panel already exists in index.html, we just need to initialize it
+  const settingsPanel = document.getElementById("settings-panel");
+  if (!settingsPanel) return;
+  
+  // We'll use elements from the existing panel
+  const apiModelSelect = document.getElementById("api-model") as HTMLSelectElement;
+  const apiKeyInput = document.getElementById("api-key") as HTMLInputElement;
+  const temperatureInput = document.getElementById("temperature") as HTMLInputElement;
+  const fontSizeSelect = document.getElementById("font-size") as HTMLSelectElement;
+  const autoSaveInput = document.getElementById("auto-save") as HTMLInputElement;
+  const darkModeCheckbox = document.getElementById("dark-mode") as HTMLInputElement;
+  
+  // Find the Save Settings button
+  const saveSettingsBtn = settingsPanel.querySelector(".btn-primary");
+  
+  // Get the current configuration
   window.electronAPI.getConfig().then((config) => {
-    // Sets current AI provider
-    const aiProviderSelect = document.getElementById(
-      "ai-provider"
-    ) as HTMLSelectElement;
-    if (aiProviderSelect) {
-      aiProviderSelect.value = config.aiProvider.provider;
-      toggleAISettings(config.aiProvider.provider);
+    // Fill in current values in the form fields
+    if (apiModelSelect && config.aiProvider) {
+      // Select the right model from the dropdown
+      Array.from(apiModelSelect.options).forEach(option => {
+        if (option.textContent?.includes("GPT-4") && config.aiProvider.provider === "openai") {
+          option.selected = true;
+        } else if (option.textContent?.includes("Claude") && config.aiProvider.provider === "anthropic") {
+          option.selected = true;
+        }
+      });
     }
-
-    // Sets OpenAI settings
-    const openaiKeyInput = document.getElementById(
-      "openai-api-key"
-    ) as HTMLInputElement;
-    const openaiModelSelect = document.getElementById(
-      "openai-model"
-    ) as HTMLSelectElement;
-    if (openaiKeyInput && config.aiProvider.openaiApiKey) {
-      openaiKeyInput.value = config.aiProvider.openaiApiKey;
+    
+    // Hide actual API key, just show if it exists
+    if (apiKeyInput && (config.aiProvider.openaiApiKey || config.aiProvider.anthropicApiKey)) {
+      apiKeyInput.value = "••••••••••••••••••••••";
     }
-    if (openaiModelSelect && config.aiProvider.openaiModel) {
-      openaiModelSelect.value = config.aiProvider.openaiModel;
+    
+    // Set temperature
+    if (temperatureInput && config.aiProvider.temperature) {
+      temperatureInput.value = config.aiProvider.temperature.toString();
+      // Update temperature display
+      const tempDisplay = document.querySelector(".temperature-value");
+      if (tempDisplay) {
+        tempDisplay.textContent = config.aiProvider.temperature.toString();
+      }
     }
-
-    // Sets Anthropic settings
-    const anthropicKeyInput = document.getElementById(
-      "anthropic-api-key"
-    ) as HTMLInputElement;
-    const anthropicModelSelect = document.getElementById(
-      "anthropic-model"
-    ) as HTMLSelectElement;
-    if (anthropicKeyInput && config.aiProvider.anthropicApiKey) {
-      anthropicKeyInput.value = config.aiProvider.anthropicApiKey;
+    
+    // Set editor preferences
+    if (fontSizeSelect && config.fontSize) {
+      // Select the closest font size option
+      Array.from(fontSizeSelect.options).forEach(option => {
+        const sizeValue = parseInt(option.textContent?.match(/\d+/)?.[0] || "14");
+        if (config.fontSize === sizeValue) {
+          option.selected = true;
+        }
+      });
     }
-    if (anthropicModelSelect && config.aiProvider.anthropicModel) {
-      anthropicModelSelect.value = config.aiProvider.anthropicModel;
+    
+    // Set auto-save interval
+    if (autoSaveInput && config.autosaveInterval) {
+      autoSaveInput.value = config.autosaveInterval.toString();
     }
-
-    // Sets editor preferences
-    const themeSelect = document.getElementById(
-      "theme-select"
-    ) as HTMLSelectElement;
-    const fontSizeInput = document.getElementById(
-      "font-size"
-    ) as HTMLInputElement;
-    if (themeSelect && config.theme) {
-      themeSelect.value = config.theme;
-    }
-    if (fontSizeInput && config.fontSize) {
-      fontSizeInput.value = config.fontSize.toString();
+    
+    // Set dark mode
+    if (darkModeCheckbox && config.theme) {
+      darkModeCheckbox.checked = config.theme === "dark";
     }
   });
 
-  // AI provider switch handler
-  const aiProviderSelect = document.getElementById(
-    "ai-provider"
-  ) as HTMLSelectElement;
-  if (aiProviderSelect) {
-    aiProviderSelect.addEventListener("change", () => {
-      toggleAISettings(aiProviderSelect.value);
+  // Set up event listeners
+  
+  // Update temperature display when slider changes
+  if (temperatureInput) {
+    const tempDisplay = document.querySelector(".temperature-value");
+    temperatureInput.addEventListener("input", () => {
+      if (tempDisplay) {
+        tempDisplay.textContent = temperatureInput.value;
+      }
     });
   }
-
-  // Toggles between OpenAI and Anthropic settings
-  function toggleAISettings(provider: string) {
-    const openaiSettings = document.getElementById("openai-settings");
-    const anthropicSettings = document.getElementById("anthropic-settings");
-
-    if (openaiSettings && anthropicSettings) {
-      if (provider === "openai") {
-        openaiSettings.style.display = "block";
-        anthropicSettings.style.display = "none";
-      } else {
-        openaiSettings.style.display = "none";
-        anthropicSettings.style.display = "block";
-      }
-    }
-  }
-
-  // Save AI settings handler
-  const saveAISettingsBtn = document.getElementById("save-ai-settings");
-  if (saveAISettingsBtn) {
-    saveAISettingsBtn.addEventListener("click", async () => {
-      const provider = (
-        document.getElementById("ai-provider") as HTMLSelectElement
-      ).value;
-      const openaiApiKey = (
-        document.getElementById("openai-api-key") as HTMLInputElement
-      ).value;
-      const openaiModel = (
-        document.getElementById("openai-model") as HTMLSelectElement
-      ).value;
-      const anthropicApiKey = (
-        document.getElementById("anthropic-api-key") as HTMLInputElement
-      ).value;
-      const anthropicModel = (
-        document.getElementById("anthropic-model") as HTMLSelectElement
-      ).value;
-
+  
+  // Save settings button
+  if (saveSettingsBtn) {
+    // Reset event listeners
+    const newSaveBtn = saveSettingsBtn.cloneNode(true);
+    saveSettingsBtn.parentNode?.replaceChild(newSaveBtn, saveSettingsBtn);
+    
+    // Add new event listener
+    newSaveBtn.addEventListener("click", async () => {
       try {
+        // Get form values
+        const apiModel = apiModelSelect?.value || "Claude 3 Sonnet";
+        let provider: "openai" | "anthropic" = "anthropic";
+        let model = "claude-3-5-sonnet";
+        
+        // Determine provider and model from selection
+        if (apiModel.includes("GPT")) {
+          provider = "openai";
+          model = "gpt-4";
+        }
+        
+        // Get temperature
+        const temperature = parseFloat(temperatureInput?.value || "0.7");
+        
+        // Get font size
+        const fontSizeOption = fontSizeSelect?.selectedOptions[0]?.textContent || "Medium (14px)";
+        const fontSize = parseInt(fontSizeOption.match(/\d+/)?.[0] || "14");
+        
+        // Get auto-save interval
+        const autosaveInterval = parseInt(autoSaveInput?.value || "5");
+        
+        // Get theme
+        const theme = darkModeCheckbox?.checked ? "dark" : "light";
+        
+        // Save AI settings
         await window.electronAPI.updateAIConfig({
-          provider: provider as "openai" | "anthropic",
-          openaiApiKey,
-          openaiModel,
-          anthropicApiKey,
-          anthropicModel,
+          provider,
+          temperature,
+          // We don't update API keys from this UI to avoid overwriting them
+          // with placeholder values
         });
-
-        alert("AI settings saved successfully!");
-      } catch (error) {
-        alert(
-          `Error saving settings: ${
-            error instanceof Error ? error.message : String(error)
-          }`
-        );
-      }
-    });
-  }
-
-  // Save editor settings handler
-  const saveEditorSettingsBtn = document.getElementById("save-editor-settings");
-  if (saveEditorSettingsBtn) {
-    saveEditorSettingsBtn.addEventListener("click", async () => {
-      const theme = (
-        document.getElementById("theme-select") as HTMLSelectElement
-      ).value;
-      const fontSize = parseInt(
-        (document.getElementById("font-size") as HTMLInputElement).value
-      );
-
-      try {
+        
+        // Save app settings
         await window.electronAPI.updateConfig({
-          theme: theme as "light" | "dark",
           fontSize,
+          theme,
+          autosaveInterval,
         });
-
-        alert("Editor settings saved successfully!");
-
-        // Updates editor immediately if needed
+        
+        // Update editor immediately if needed
         if (theme === "dark") {
           editor.setOption("theme", "ayu-mirage");
         } else {
           editor.setOption("theme", "default");
         }
-
+        
         editor.getWrapperElement().style.fontSize = `${fontSize}px`;
+        
+        // Update auto-save timer
+        setupAutoSave();
+        
+        alert("Settings saved successfully!");
       } catch (error) {
         alert(
           `Error saving settings: ${
@@ -4254,6 +4455,20 @@ function renderSettingsPanel() {
           }`
         );
       }
+    });
+  }
+  
+  // Cancel button
+  const cancelBtn = settingsPanel.querySelector(".btn-secondary");
+  if (cancelBtn) {
+    // Reset event listeners
+    const newCancelBtn = cancelBtn.cloneNode(true);
+    cancelBtn.parentNode?.replaceChild(newCancelBtn, cancelBtn);
+    
+    // Add new event listener
+    newCancelBtn.addEventListener("click", () => {
+      // Switch back to editor view
+      switchView("editor");
     });
   }
 }
